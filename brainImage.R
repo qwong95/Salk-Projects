@@ -12,12 +12,25 @@ boot <- Boot(tissueExp1 = composite@tissueExp1, tissueExp2 = composite@tissueExp
 write.table(x = boot,file = "boot.txt",quote=FALSE)
 
 # Read a file and store into a variable
-bootdata <- read.table("GPe_PaV.boot.tsv", header=TRUE)
+bootdata <- read.table("Mo_EGLU.boot.tsv", header=TRUE)
 change <- bootdata$change
 
 # Change parameter calculations
-change_sd <- sd(change)*sqrt((length(change)-1)/(length(change)))
+change_sd <- sd(change)
 change_mean <- mean(change)
+
+# Calculate the z-scores and p-values of the tissues
+z <- (bootdata[, "change"] - change_mean) / change_sd
+p <- pnorm(z)
+
+bootdata$z_score <- z
+bootdata$p_value <- p
+bootdata[bootdata$change > change_mean, "new_p"] <- 1 - bootdata[bootdata$change > change_mean, "p_value"]
+bootdata[bootdata$change > change_mean, "p_value"] <- bootdata[bootdata$change > change_mean, "new_p"]
+bootdata$new_p <- NULL
+
+write.table(bootdata, "Mo_EGLU.boot.tsv")
+
 
 # Create a plot labelling all the tissues compared
 bootdata$geneName <- row.names(bootdata)
